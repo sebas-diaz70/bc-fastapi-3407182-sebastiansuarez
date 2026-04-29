@@ -1,248 +1,124 @@
-# ============================================
-# PROYECTO: API DE SALUDO
-# ============================================
-# Semana 01 - Bootcamp FastAPI Zero to Hero
-#
-# En este proyecto implementarás una API de saludos
-# que demuestra el uso de:
-# - FastAPI
-# - Type hints
-# - Path parameters
-# - Query parameters
-# - Documentación automática
-# ============================================
+from fastapi import FastAPI, HTTPException
+from typing import Optional
 
-from fastapi import FastAPI
+# TODO 1: Crear aplicación FastAPI
+app = FastAPI(
+    title="API Academia de Artes Marciales",
+    version="1.0.0",
+    description="API para la gestión de estudiantes, instructores, clases y cinturones"
+)
 
-# ============================================
-# DATOS DE CONFIGURACIÓN
-# ============================================
+# ===============================
+# TODO 2: Endpoint raíz
+# ===============================
+@app.get("/")
+async def root():
+    return {
+        "name": "API Academia de Artes Marciales",
+        "version": "1.0.0",
+        "domain": "academia-artes-marciales"
+    }
 
-# Diccionario de saludos por idioma
-GREETINGS: dict[str, str] = {
-    "es": "¡Hola, {name}!",
-    "en": "Hello, {name}!",
-    "fr": "Bonjour, {name}!",
-    "de": "Hallo, {name}!",
-    "it": "Ciao, {name}!",
-    "pt": "Olá, {name}!",
-}
-
-# Idiomas soportados (para documentación)
-SUPPORTED_LANGUAGES = list(GREETINGS.keys())
-
-
-# ============================================
-# TODO 1: CREAR LA INSTANCIA DE FASTAPI
-# ============================================
-# Crea una instancia de FastAPI con la siguiente configuración:
-# - title: "Greeting API"
-# - description: "API de saludos multiidioma"
-# - version: "1.0.0"
-#
-# Ejemplo:
-#   app = FastAPI(title="...", description="...", version="...")
-
-app = None  # TODO: Reemplaza None con la instancia de FastAPI
-
-
-# ============================================
-# TODO 2: ENDPOINT RAÍZ
-# ============================================
-# Implementa el endpoint GET /
-#
-# Debe retornar:
-# {
-#     "name": "Greeting API",
-#     "version": "1.0.0",
-#     "docs": "/docs",
-#     "languages": ["es", "en", "fr", "de", "it", "pt"]
-# }
-#
-# Recuerda:
-# - Usar el decorador @app.get("/")
-# - Definir la función como async
-# - Agregar docstring para la documentación
-
-# @app.get("/")
-# async def root() -> dict[str, str | list[str]]:
-#     """Información de la API."""
-#     # TODO: Implementar
-#     pass
-
-
-# ============================================
-# TODO 3: SALUDO PERSONALIZADO
-# ============================================
-# Implementa el endpoint GET /greet/{name}
-#
-# Parámetros:
-# - name (path): Nombre de la persona a saludar
-# - language (query, default="es"): Idioma del saludo
-#
-# Debe retornar:
-# {
-#     "greeting": "¡Hola, Carlos!",
-#     "language": "es",
-#     "name": "Carlos"
-# }
-#
-# Si el idioma no existe, usar español por defecto.
-
-# @app.get("/greet/{name}")
-# async def greet(
-#     name: str,
-#     language: str = "es",
-# ) -> dict[str, str]:
-#     """
-#     Saluda a una persona en el idioma especificado.
-#     
-#     Args:
-#         name: Nombre de la persona
-#         language: Código de idioma (es, en, fr, de, it, pt)
-#     
-#     Returns:
-#         dict: Saludo personalizado
-#     """
-#     # TODO: Implementar
-#     # 1. Obtener el template del saludo (usar .get() para default)
-#     # 2. Formatear el saludo con el nombre
-#     # 3. Retornar el diccionario con greeting, language y name
-#     pass
-
-
-# ============================================
-# TODO 4: SALUDO FORMAL
-# ============================================
-# Implementa el endpoint GET /greet/{name}/formal
-#
-# Parámetros:
-# - name (path): Nombre/apellido de la persona
-# - title (query, default="Sr./Sra."): Título formal
-#
-# Debe retornar:
-# {
-#     "greeting": "Estimado/a Dr. García, es un placer saludarle.",
-#     "title": "Dr.",
-#     "name": "García"
-# }
-
-# @app.get("/greet/{name}/formal")
-# async def greet_formal(
-#     name: str,
-#     title: str = "Sr./Sra.",
-# ) -> dict[str, str]:
-#     """
-#     Genera un saludo formal con título.
-#     
-#     Args:
-#         name: Nombre o apellido de la persona
-#         title: Título formal (Dr., Ing., Prof., Lic., etc.)
-#     
-#     Returns:
-#         dict: Saludo formal
-#     """
-#     # TODO: Implementar
-#     # 1. Construir el saludo formal
-#     # 2. Retornar el diccionario
-#     pass
-
-
-# ============================================
-# TODO 5: SALUDO SEGÚN LA HORA
-# ============================================
-# Implementa el endpoint GET /greet/{name}/time-based
-#
-# Parámetros:
-# - name (path): Nombre de la persona
-# - hour (query): Hora del día (0-23)
-#
-# Lógica:
-# - 5 <= hour < 12: "Buenos días, {name}!"
-# - 12 <= hour < 18: "Buenas tardes, {name}!"
-# - else: "Buenas noches, {name}!"
-#
-# Debe retornar:
-# {
-#     "greeting": "Buenos días, Ana!",
-#     "hour": 10,
-#     "period": "morning"
-# }
-
-# Función auxiliar para determinar el período del día
-def get_day_period(hour: int) -> tuple[str, str]:
-    """
-    Determina el saludo y período según la hora.
+# ===============================
+# TODO 3: Bienvenida personalizada
+# ===============================
+@app.get("/{actor}/{name}")
+async def welcome(actor: str, name: str, language: Optional[str] = "es"):
     
-    Args:
-        hour: Hora del día (0-23)
+    actor = actor.lower()
+
+    if language == "en":
+        message = f"Welcome {name}! You are accessing the {actor} system."
+    elif language == "fr":
+        message = f"Bienvenue {name}! Vous accédez au système de {actor}."
+    else:
+        message = f"¡Bienvenido {name}! Estás accediendo al sistema de {actor} de la academia."
+
+    return {
+        "actor": actor,
+        "message": message
+    }
+
+# ===============================
+# TODO 4: Información de entidad
+# ===============================
+@app.get("/{entity}/{identifier}/info")
+async def entity_info(entity: str, identifier: str, detail_level: Optional[str] = "basic"):
     
-    Returns:
-        tuple: (saludo, período)
-    """
-    # TODO: Implementar
-    # Retorna una tupla con (saludo, period)
-    # Ejemplo: ("Buenos días", "morning")
-    pass
+    entity = entity.lower()
 
+    # Datos simulados
+    database = {
+        "estudiantes": {
+            "id": identifier,
+            "nombre": "Juan Pérez",
+            "cinturon": "Amarillo",
+            "edad": 18
+        },
+        "instructores": {
+            "id": identifier,
+            "nombre": "Sensei Carlos",
+            "rango": "Cinturón Negro",
+            "experiencia": "10 años"
+        },
+        "clases": {
+            "id": identifier,
+            "nombre": "Karate Básico",
+            "horario": "Lunes y Miércoles 6pm",
+            "capacidad": 20
+        },
+        "cinturones": {
+            "id": identifier,
+            "nivel": "Amarillo",
+            "descripcion": "Nivel básico de aprendizaje"
+        }
+    }
 
-# @app.get("/greet/{name}/time-based")
-# async def greet_time_based(
-#     name: str,
-#     hour: int,
-# ) -> dict[str, str | int]:
-#     """
-#     Saluda según la hora del día.
-#     
-#     Args:
-#         name: Nombre de la persona
-#         hour: Hora del día (0-23)
-#     
-#     Returns:
-#         dict: Saludo con período del día
-#     """
-#     # TODO: Implementar
-#     # 1. Validar que hour esté entre 0-23
-#     # 2. Usar get_day_period() para obtener el saludo
-#     # 3. Retornar el diccionario
-#     pass
+    if entity not in database:
+        raise HTTPException(status_code=404, detail="Entidad no encontrada")
 
+    result = database[entity]
 
-# ============================================
-# TODO 6: HEALTH CHECK
-# ============================================
-# Implementa el endpoint GET /health
-#
-# Debe retornar:
-# {
-#     "status": "healthy",
-#     "service": "greeting-api",
-#     "version": "1.0.0"
-# }
+    if detail_level == "full":
+        result.update({
+            "academia": "Academia de Artes Marciales",
+            "estado": "activo",
+            "notas": "Información completa del sistema"
+        })
 
-# @app.get("/health")
-# async def health_check() -> dict[str, str]:
-#     """Verifica el estado de la API."""
-#     # TODO: Implementar
-#     pass
+    return result
 
+# ===============================
+# TODO 5: Servicio según horario
+# ===============================
+@app.get("/servicio/horario")
+async def schedule(hour: int):
+    
+    if hour < 0 or hour > 23:
+        raise HTTPException(status_code=400, detail="La hora debe estar entre 0 y 23")
 
-# ============================================
-# VERIFICACIÓN
-# ============================================
-# Una vez completados todos los TODOs:
-#
-# 1. Ejecutar:
-#    docker compose up --build
-#
-# 2. Probar en el navegador:
-#    http://localhost:8000/docs
-#
-# 3. Verificar cada endpoint:
-#    - GET /
-#    - GET /greet/Carlos
-#    - GET /greet/Carlos?language=en
-#    - GET /greet/García/formal?title=Dr.
-#    - GET /greet/Ana/time-based?hour=10
-#    - GET /health
-# ============================================
+    if 6 <= hour <= 11:
+        return {
+            "mensaje": "Turno mañana: Clases activas",
+            "disponible": ["karate", "taekwondo"]
+        }
+    elif 12 <= hour <= 17:
+        return {
+            "mensaje": "Turno tarde: Clases activas",
+            "disponible": ["judo", "kung fu"]
+        }
+    else:
+        return {
+            "mensaje": "Turno noche: Clases activas",
+            "disponible": ["mma", "defensa personal"]
+        }
+
+# ===============================
+# TODO 6: Health check
+# ===============================
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "domain": "academia-artes-marciales"
+    }
